@@ -87,18 +87,27 @@ fi
 
 # Process each line in input file in parallel
 pids=()
+args=()
 while IFS= read -r arg || [ -n "$arg" ]; do
     [ -z "$arg" ] && continue
     echo "Running poke_files with argument: $arg"
     poke_files "$arg" &
     pid=$!
     pids+=($pid)
+    args+=("$arg")
 done < "$INPUT_FILE"
 
 # Wait for all background jobs to finish and check for errors
 fail=0
-for pid in "${pids[@]}"; do
-    wait "$pid" || fail=1
+for i in "${!pids[@]}"; do
+    pid="${pids[$i]}"
+    arg="${args[$i]}"
+    if wait "$pid"; then
+        echo "process completed for arg $arg"
+    else
+        echo "process completed for arg $arg (FAILED)" >&2
+        fail=1
+    fi
 done
 
 if [ $fail -ne 0 ]; then
@@ -110,4 +119,3 @@ timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "$timestamp" >> "$LOG_FILE"
 
 echo "Completed at $timestamp"
-# ...existing code...
