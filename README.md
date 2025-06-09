@@ -20,7 +20,7 @@ You can also manually call `staying_alive` from the CLI. You can also manually c
 
 ## Evil mode
 
-Say, you got a ton of files you need to poke. Say, it's wayyy too slow if you put it in `.bashrc` directly. Try something like this:
+Say, you got a ton of files you need to poke. Say, it's wayyy too slow if you put it in `.bashrc` directly. Try putting something like this in your `.bashrc` instead:
 
 ```
 staying_alive -c \
