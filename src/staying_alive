@@ -97,16 +97,35 @@ while IFS= read -r arg || [ -n "$arg" ]; do
     args+=("$arg")
 done < "$INPUT_FILE"
 
-# Wait for all background jobs to finish and check for errors
+# Wait for all background jobs to finish and check for errors, printing as they finish
 fail=0
+declare -A pid_to_arg
 for i in "${!pids[@]}"; do
     pid="${pids[$i]}"
     arg="${args[$i]}"
-    if wait "$pid"; then
-        echo "process completed for arg $arg"
-    else
-        echo "process completed for arg $arg (FAILED)" >&2
-        fail=1
+    pid_to_arg["$pid"]="$arg"
+done
+
+remaining_pids=("${pids[@]}")
+while ((${#remaining_pids[@]})); do
+    new_remaining=()
+    for pid in "${remaining_pids[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            # Still running
+            new_remaining+=("$pid")
+        else
+            # Finished, check status
+            if wait "$pid"; then
+                echo "process completed for arg ${pid_to_arg[$pid]}"
+            else
+                echo "process completed for arg ${pid_to_arg[$pid]} (FAILED)" >&2
+                fail=1
+            fi
+        fi
+    done
+    remaining_pids=("${new_remaining[@]}")
+    if ((${#remaining_pids[@]})); then
+        sleep 2
     fi
 done
 
