@@ -33,6 +33,12 @@ touch "$INSTALL_DIR/staying_alive_timestamps.log"
 mkdir -p "$HOME/.local/bin"
 cp src/poke_files "$HOME/.local/bin/poke_files"
 cp src/staying_alive "$HOME/.local/bin/staying_alive"
+
+# Update default variables in staying_alive script
+sed -i "s|^INPUT_FILE=.*|INPUT_FILE=\"\${INPUT_FILE:-$INSTALL_DIR/to_keep_alive.txt}\"|" "$HOME/.local/bin/staying_alive"
+sed -i "s|^LOG_FILE=.*|LOG_FILE=\"\${LOG_FILE:-$INSTALL_DIR/staying_alive_timestamps.log}\"|" "$HOME/.local/bin/staying_alive"
+sed -i "s|^PERIOD=.*|PERIOD=\"\${PERIOD:-$PERIOD}\"|" "$HOME/.local/bin/staying_alive"
+
 chmod +x "$HOME/.local/bin/poke_files" "$HOME/.local/bin/staying_alive"
 
 # Add staying_alive to .bashrc if not already present
