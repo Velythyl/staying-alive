@@ -42,6 +42,8 @@ if ! grep -q "staying_alive" "$HOME/.bashrc"; then
         --input-file \"$INSTALL_DIR/to_keep_alive.txt\" \\
         --log-file \"$INSTALL_DIR/staying_alive_timestamps.log\" \\
         --period \"$PERIOD\"" >> "$HOME/.bashrc"
+else
+    echo "Not adding staying_alive to bashrc because it was already there"
 fi
 
 echo "Installation complete."
