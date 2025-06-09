@@ -42,30 +42,45 @@ fi
 # Converts a period string to a format accepted by GNU date
 convert_period_for_date() {
     local period="$1"
-    if [[ "$period" =~ ^([0-9]+)w$ ]]; then
-        # weeks to days
-        echo "$((BASH_REMATCH[1] * 7)) days"
-    elif [[ "$period" =~ ^([0-9]+)d$ ]]; then
-        echo "${BASH_REMATCH[1]} days"
-    elif [[ "$period" =~ ^([0-9]+)h$ ]]; then
-        echo "${BASH_REMATCH[1]} hours"
-    elif [[ "$period" =~ ^([0-9]+)m$ ]]; then
-        echo "${BASH_REMATCH[1]} minutes"
-    elif [[ "$period" =~ ^([0-9]+)s$ ]]; then
-        echo "${BASH_REMATCH[1]} seconds"
-    elif [[ "$period" =~ ^([0-9]+)M$ ]]; then
-        echo "${BASH_REMATCH[1]} months"
-    elif [[ "$period" =~ ^([0-9]+)y$ ]]; then
-        echo "${BASH_REMATCH[1]} years"
-    elif [[ "$period" =~ ^([0-9]+)ms$ ]]; then
-        echo "1 seconds" # ms not supported, round up
-        echo "Warning: milliseconds not supported, rounding up to 1 second" >&2
-    elif [[ "$period" =~ ^([0-9]+)us$ ]]; then
-        echo "1 seconds" # us not supported, round up
-        echo "Warning: microseconds not supported, rounding up to 1 second" >&2
-    else
-        echo "$period"
-    fi
+    local result=""
+    local part re num unit
+
+    # Split by spaces
+    for part in $period; do
+        if [[ "$part" =~ ^([0-9]+)w$ ]]; then
+            num="${BASH_REMATCH[1]}"
+            result+="$((num * 7)) days "
+        elif [[ "$part" =~ ^([0-9]+)d$ ]]; then
+            num="${BASH_REMATCH[1]}"
+            result+="$num days "
+        elif [[ "$part" =~ ^([0-9]+)h$ ]]; then
+            num="${BASH_REMATCH[1]}"
+            result+="$num hours "
+        elif [[ "$part" =~ ^([0-9]+)m$ ]]; then
+            num="${BASH_REMATCH[1]}"
+            result+="$num minutes "
+        elif [[ "$part" =~ ^([0-9]+)s$ ]]; then
+            num="${BASH_REMATCH[1]}"
+            result+="$num seconds "
+        elif [[ "$part" =~ ^([0-9]+)M$ ]]; then
+            num="${BASH_REMATCH[1]}"
+            result+="$num months "
+        elif [[ "$part" =~ ^([0-9]+)y$ ]]; then
+            num="${BASH_REMATCH[1]}"
+            result+="$num years "
+        elif [[ "$part" =~ ^([0-9]+)ms$ ]]; then
+            result+="1 seconds "
+            echo "Warning: milliseconds not supported, rounding up to 1 second" >&2
+        elif [[ "$part" =~ ^([0-9]+)us$ ]]; then
+            result+="1 seconds "
+            echo "Warning: microseconds not supported, rounding up to 1 second" >&2
+        else
+            result+="$part "
+        fi
+    done
+
+    # Trim trailing space
+    echo "${result%" "}"
 }
 
 # Convert PERIOD to a format accepted by 'date'
