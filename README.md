@@ -18,7 +18,7 @@ The `install.sh` script will add `staying_alive` to your `.bashrc`. Manually rem
 
 You can also manually call `staying_alive` from the CLI. You can also manually call `poke_files` from the CLI to poke specific directories without adding them to `to_keep_alive.txt`.
 
-## Evil mode
+## Sbatch mode
 
 Say, you got a ton of files you need to poke. Say, it's wayyy too slow if you put it in `.bashrc` directly. Try putting something like this in your `.bashrc` instead:
 
