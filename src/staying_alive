@@ -85,18 +85,29 @@ if [ "$FORCE_RUN" -eq 0 ] && [ -f "$LOG_FILE" ]; then
     fi
 fi
 
-# Process each line in input file
+# Process each line in input file in parallel
+pids=()
 while IFS= read -r arg || [ -n "$arg" ]; do
     [ -z "$arg" ] && continue
     echo "Running poke_files with argument: $arg"
-    poke_files "$arg"
-    if [ $? -ne 0 ]; then
-        echo "Error: poke_files failed for argument: $arg" >&2
-    fi
+    poke_files "$arg" &
+    pid=$!
+    pids+=($pid)
 done < "$INPUT_FILE"
+
+# Wait for all background jobs to finish and check for errors
+fail=0
+for pid in "${pids[@]}"; do
+    wait "$pid" || fail=1
+done
+
+if [ $fail -ne 0 ]; then
+    echo "One or more poke_files processes failed." >&2
+fi
 
 # Append timestamp to log
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "$timestamp" >> "$LOG_FILE"
 
 echo "Completed at $timestamp"
+# ...existing code...
