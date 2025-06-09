@@ -7,10 +7,15 @@ PERIOD="${PERIOD:-1w}"
 
 # Parse command line arguments
 FORCE_RUN=0
+CHECK_PERIOD=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -f|--force)
             FORCE_RUN=1
+            shift
+            ;;
+        -c|--check-period)
+            CHECK_PERIOD=1
             shift
             ;;
         -p|--period)
@@ -93,11 +98,22 @@ if [ "$FORCE_RUN" -eq 0 ] && [ -f "$LOG_FILE" ]; then
         last_run_ts=$(date -d "$last_run" +%s)
         period_ago=$(date -d "$PERIOD_ARG ago" +%s)
         if [ "$last_run_ts" -gt "$period_ago" ]; then
-            echo "Last run was less than $PERIOD ago ($last_run), exiting."
-            echo "Use --force or -f to run anyway."
-            exit 0
+            if [ "$CHECK_PERIOD" -eq 1 ]; then
+                echo "Last run was less than $PERIOD ago ($last_run), would exit."
+                exit 1
+            else
+                echo "Last run was less than $PERIOD ago ($last_run), exiting."
+                echo "Use --force or -f to run anyway."
+                exit 0
+            fi
         fi
     fi
+fi
+
+if [ "$CHECK_PERIOD" -eq 1 ]; then
+    # If we reach here, it's OK to run
+    echo "OK: staying-alive could run now."
+    exit 0
 fi
 
 # Process each line in input file in parallel
