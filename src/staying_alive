@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# Configurable files and period (can be set via env or command line)
+INPUT_FILE="${INPUT_FILE:-$HOME/.staying-alive/to_keep_alive.txt}"
+LOG_FILE="${LOG_FILE:-$HOME/.staying-alive/staying_alive_timestamps.log}"
+PERIOD="${PERIOD:-1w}"
+
+# Parse command line arguments
+FORCE_RUN=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--force)
+            FORCE_RUN=1
+            shift
+            ;;
+        -p|--period)
+            PERIOD="$2"
+            shift 2
+            ;;
+        -i|--input-file)
+            INPUT_FILE="$2"
+            shift 2
+            ;;
+        -l|--log-file)
+            LOG_FILE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Check if input file exists
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "Error: $INPUT_FILE not found" >&2
+    exit 1
+fi
+
+
+# Converts a period string to a format accepted by GNU date
+convert_period_for_date() {
+    local period="$1"
+    if [[ "$period" =~ ^([0-9]+)w$ ]]; then
+        # weeks to days
+        echo "$((BASH_REMATCH[1] * 7)) days"
+    elif [[ "$period" =~ ^([0-9]+)d$ ]]; then
+        echo "${BASH_REMATCH[1]} days"
+    elif [[ "$period" =~ ^([0-9]+)h$ ]]; then
+        echo "${BASH_REMATCH[1]} hours"
+    elif [[ "$period" =~ ^([0-9]+)m$ ]]; then
+        echo "${BASH_REMATCH[1]} minutes"
+    elif [[ "$period" =~ ^([0-9]+)s$ ]]; then
+        echo "${BASH_REMATCH[1]} seconds"
+    elif [[ "$period" =~ ^([0-9]+)M$ ]]; then
+        echo "${BASH_REMATCH[1]} months"
+    elif [[ "$period" =~ ^([0-9]+)y$ ]]; then
+        echo "${BASH_REMATCH[1]} years"
+    elif [[ "$period" =~ ^([0-9]+)ms$ ]]; then
+        echo "1 seconds" # ms not supported, round up
+        echo "Warning: milliseconds not supported, rounding up to 1 second" >&2
+    elif [[ "$period" =~ ^([0-9]+)us$ ]]; then
+        echo "1 seconds" # us not supported, round up
+        echo "Warning: microseconds not supported, rounding up to 1 second" >&2
+    else
+        echo "$period"
+    fi
+}
+
+# Convert PERIOD to a format accepted by 'date'
+PERIOD_ARG="$(convert_period_for_date "$PERIOD")"
+
+# Check if log file exists and is recent enough (unless forced)
+if [ "$FORCE_RUN" -eq 0 ] && [ -f "$LOG_FILE" ]; then
+    last_run=$(tail -n 1 "$LOG_FILE" 2>/dev/null)
+    if [ -n "$last_run" ]; then
+        last_run_ts=$(date -d "$last_run" +%s)
+        period_ago=$(date -d "$PERIOD_ARG ago" +%s)
+        if [ "$last_run_ts" -gt "$period_ago" ]; then
+            echo "Last run was less than $PERIOD ago ($last_run), exiting."
+            echo "Use --force or -f to run anyway."
+            exit 0
+        fi
+    fi
+fi
+
+# Process each line in input file
+while IFS= read -r arg || [ -n "$arg" ]; do
+    [ -z "$arg" ] && continue
+    echo "Running poke_files with argument: $arg"
+    poke_files "$arg"
+    if [ $? -ne 0 ]; then
+        echo "Error: poke_files failed for argument: $arg" >&2
+    fi
+done < "$INPUT_FILE"
+
+# Append timestamp to log
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+echo "$timestamp" >> "$LOG_FILE"
+
+echo "Completed at $timestamp"

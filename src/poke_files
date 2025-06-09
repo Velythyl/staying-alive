@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Function to display help message
+show_help() {
+    cat <<EOF
+Usage: $0 [OPTIONS] <directory>
+Recursively updates timestamps for all files in the specified directory to prevent deletion.
+
+Options:
+  -h, --help      Show this help message and exit
+  -v, --verbose   Show each file as it's being processed
+
+Examples:
+  $0 /path/to/directory          # Update all files quietly
+  $0 -v /path/to/directory       # Show files as they're updated
+EOF
+}
+
+# Initialize variables
+verbose=false
+target_dir=""
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -v|--verbose)
+            verbose=true
+            shift
+            ;;
+        *)
+            if [[ -z "$target_dir" ]]; then
+                target_dir="$1"
+                shift
+            else
+                echo "Error: Too many arguments"
+                show_help
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+# Check if directory argument is provided
+if [[ -z "$target_dir" ]]; then
+    echo "Error: No directory specified"
+    show_help
+    exit 1
+fi
+
+# Verify the directory exists
+if [[ ! -d "$target_dir" ]]; then
+    echo "Error: Directory '$target_dir' does not exist"
+    exit 1
+fi
+
+if [[ "$verbose" == true ]]; then
+    echo "Updating timestamps for all files in: $target_dir"
+    find "$target_dir" -type f -exec sh -c 'echo "Updating: $1"; touch "$1"' sh {} \;
+    echo "Done. All files have been updated."
+else
+    find "$target_dir" -type f -exec touch {} +
+fi
