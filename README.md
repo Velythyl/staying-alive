@@ -4,7 +4,7 @@ Keep-alive for filesystems with admin-level expiry dates
 
 ## Why
 
-This refreshes the timestamps on files such that you can prevent your admins from deleting them, if you still need the files. Use intelligently, don't add your entire user-accessible files to it. Your admins probably have expery dates for a reason :P
+This refreshes the timestamps on files such that you can prevent your admins from deleting them, if you still need the files. Use intelligently, don't add your entire user-accessible files to it. Your admins probably have expiry dates for a reason :P
 
 ## How-to
 
