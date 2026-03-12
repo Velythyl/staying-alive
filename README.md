@@ -27,7 +27,7 @@ staying_alive -c \
     --input-file "/home/<user>/.staying-alive/to_keep_alive.txt" \
     --log-file "/home/<user>/.staying-alive/staying_alive_timestamps.log" \
     --period "2w" \
-&& sbatch --partition=long-cpu --time=3:00:00 --mem=8G --cpus-per-task 3 \
+&& sbatch --partition=cpu-only --time=3:00:00 --mem=8G --cpus-per-task 3 \
     --output=/home/<user>/.staying-alive/slurm-%j.out \
     --error=/home/<user>/.staying-alive/slurm-%j.err \
     --wrap="staying_alive \
