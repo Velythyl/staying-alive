@@ -12,7 +12,7 @@ Run `install.sh`
 
 You can specify the `--period/-p` using `systemd` duration format: us, ms, s, m, h, d, w, M, y (microseconds to years). For example, `1w 2d` would be one week and two days. This defaults to `1w`.
 
-You can specify the install directory for the auxiliary files using `--install-dir/-i`. This defaults to `~/.staying-alive`. In this directory, you'll find `staying_alive_timestamps.log` and `to_keep_alive.txt`. To add directories to keep alive, add them on a new line in `to_keep_alive.txt`. The `staying_alive_timestamps.log` just records the times where `staying_alive` was called.
+You can specify the install directory for the auxiliary files using `--install-dir/-i`. This defaults to `~/.staying-alive`. In this directory, you'll find `staying_alive_timestamps.log` and `to_keep_alive.txt`. To add directories to keep alive, add them on a new line in `to_keep_alive.txt`. Lines starting with `#` are ignored, and paths that no longer exist are skipped with a warning. At most `MAX_JOBS` (default 16) `poke_files` run in parallel. If any `poke_files` fails, no timestamp is recorded, so the next login retries. The `staying_alive_timestamps.log` just records the times where `staying_alive` was called.
 
 The `install.sh` script will add `staying_alive` to your `.bashrc`. Manually remove it from there if you dont want it lol.
 
