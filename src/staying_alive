@@ -4,6 +4,11 @@
 INPUT_FILE="${INPUT_FILE:-$HOME/.staying-alive/to_keep_alive.txt}"
 LOG_FILE="${LOG_FILE:-$HOME/.staying-alive/staying_alive_timestamps.log}"
 PERIOD="${PERIOD:-1w}"
+MAX_JOBS="${MAX_JOBS:-16}"
+
+# Resolve poke_files next to this script so batch jobs without ~/.local/bin on PATH still find it
+POKE_FILES="$(dirname "$(readlink -f "$0")")/poke_files"
+[ -x "$POKE_FILES" ] || POKE_FILES="poke_files"
 
 # Parse command line arguments
 FORCE_RUN=0
@@ -121,8 +126,16 @@ pids=()
 args=()
 while IFS= read -r arg || [ -n "$arg" ]; do
     [ -z "$arg" ] && continue
+    [[ "$arg" == \#* ]] && continue
+    if [ ! -e "$arg" ]; then
+        echo "Warning: $arg does not exist, skipping" >&2
+        continue
+    fi
+    while (( $(jobs -rp | wc -l) >= MAX_JOBS )); do
+        sleep 1
+    done
     echo "Running poke_files with argument: $arg"
-    poke_files "$arg" &
+    "$POKE_FILES" "$arg" &
     pid=$!
     pids+=($pid)
     args+=("$arg")
@@ -161,7 +174,8 @@ while ((${#remaining_pids[@]})); do
 done
 
 if [ $fail -ne 0 ]; then
-    echo "One or more poke_files processes failed." >&2
+    echo "One or more poke_files processes failed; not recording a timestamp so the next login retries." >&2
+    exit 1
 fi
 
 # Append timestamp to log
